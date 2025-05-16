@@ -1,5 +1,6 @@
-const { withClerkMiddleware } = require("@clerk/nextjs/server");
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true
+};
 
-module.exports = withClerkMiddleware({
-  reactStrictMode: true,
-});
+module.exports = nextConfig;
