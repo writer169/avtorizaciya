@@ -1,14 +1,18 @@
-import { ClerkProvider } from "@clerk/nextjs";
-import { useRouter } from "next/router";
+// pages/_app.js
+import { ClerkProvider } from '@clerk/nextjs';
+import { useRouter } from 'next/router';
 
-function MyApp({ Component, pageProps }) {
-  const { pathname } = useRouter();
+export default function MyApp({ Component, pageProps }) {
+  const router = useRouter();
 
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      routerPush={router.push}
+      routerReplace={router.replace}
+      router={router}
+    >
       <Component {...pageProps} />
     </ClerkProvider>
   );
 }
-
-export default MyApp;
