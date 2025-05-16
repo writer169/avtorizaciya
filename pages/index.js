@@ -1,1 +1,1 @@
-import { SignInButton, SignOutButton, useUser } from "@clerk
+import { SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
