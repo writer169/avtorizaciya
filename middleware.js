@@ -1,7 +1,8 @@
-import { authMiddleware } from "@clerk/nextjs";
+// middleware.js
+import { authMiddleware } from "@clerk/nextjs/server";
 
 export default authMiddleware();
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico).*)"],
+  matcher: ["/protected/(.*)", "/dashboard"],
 };
