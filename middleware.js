@@ -1,18 +1,26 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Эта middleware будет применяться ко всем маршрутам, кроме перечисленных в publicRoutes
-export default clerkMiddleware({
-  // Маршруты, которые будут доступны без авторизации
-  publicRoutes: [
-    '/', // Ваша главная страница
-    '/admin', // Если '/admin' действительно должен быть публичным
-    '/debug', // Если '/debug' должен быть публичным
-    '/api/approve', // API маршрут для одобрения
-    '/api/check-approval', // API маршрут для проверки одобрения
-  ],
+// Определяем публичные маршруты
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/admin',
+  '/debug',
+  '/api/check-approval',
+  // '/api/approve' исключен, если он должен быть защищенным
+]);
+
+export default clerkMiddleware((auth, req) => {
+  // Защищаем маршруты, которые не являются публичными
+  if (!isPublicRoute(req)) {
+    auth().protect();
+  }
 });
 
-// Конфигурация matcher для определения маршрутов, к которым применяется middleware
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    // Применяем middleware ко всем маршрутам, кроме статических файлов и _next
+    '/((?!.+\\.[\\w]+$|_next).*)',
+    '/',
+    '/(api|trpc)(.*)',
+  ],
 };
