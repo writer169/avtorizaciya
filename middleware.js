@@ -1,7 +1,7 @@
-import { authMiddleware } from "@clerk/nextjs";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
 // Эта middleware будет применяться ко всем маршрутам, кроме перечисленных в publicRoutes
-export default authMiddleware({
+export default clerkMiddleware({
   // Маршруты, которые будут доступны без авторизации
   publicRoutes: [
     '/', // Ваша главная страница
@@ -9,13 +9,10 @@ export default authMiddleware({
     '/debug', // Если '/debug' должен быть публичным
     '/api/approve', // API маршрут для одобрения
     '/api/check-approval', // API маршрут для проверки одобрения
-    // Добавьте другие публичные маршруты здесь
   ],
-  // Маршруты, которые Clerk middleware будет игнорировать
-  // ignoredRoutes: ['/((?!api|trpc|_next).*)'], // Пример: игнорировать все, кроме api, trpc и _next
 });
 
-// Конфигурация matcher остается прежней, если она соответствует вашим требованиям
+// Конфигурация matcher для определения маршрутов, к которым применяется middleware
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };
