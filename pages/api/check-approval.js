@@ -1,12 +1,9 @@
-import { getAuth } from "@clerk/nextjs/server";
-import { clerkClient } from "@clerk/nextjs/server";
+import { getAuth, clerkClient } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
   try {
-    const auth = getAuth(req);
-    console.log("Auth info:", JSON.stringify(auth));
-    
-    const { userId } = auth;
+    // Используем getAuth с запросом
+    const { userId } = getAuth(req);
     
     if (!userId) {
       console.log("No userId found in auth");
@@ -22,7 +19,17 @@ export default async function handler(req, res) {
     
     console.log(`User metadata for ${userId}:`, JSON.stringify(user.publicMetadata));
     
-    // Проверяем флаг одобрения
+    // Проверяем, является ли пользователь администратором
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    const isAdmin = user.primaryEmailAddress?.emailAddress === adminEmail;
+    
+    // Админы всегда одобрены
+    if (isAdmin) {
+      console.log(`User ${userId} is admin and automatically approved`);
+      return res.status(200).json({ approved: true });
+    }
+    
+    // Проверяем флаг одобрения для обычных пользователей
     if (user.publicMetadata?.approved !== true) {
       console.log(`User ${userId} is not approved`);
       return res.status(403).json({ error: 'not_approved' });
