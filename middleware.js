@@ -9,7 +9,8 @@ export async function middleware(request) {
     url.pathname.startsWith('/favicon.ico') ||
     url.pathname === '/' ||
     url.pathname === '/api/approve' ||
-    url.pathname === '/admin'
+    url.pathname === '/admin' ||
+    url.pathname === '/debug'
   ) {
     return NextResponse.next();
   }
