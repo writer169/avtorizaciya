@@ -1,10 +1,9 @@
-import { clerkClient } from "@clerk/nextjs/server";
-import { getAuth } from "@clerk/nextjs/server";
+import { clerkClient, getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
   try {
-    // Получаем информацию о текущем пользователе
-    const auth = getAuth(req);
+    // Получаем информацию о текущем пользователе с новым асинхронным синтаксисом
+    const auth = await getAuth(req);
     const { userId } = auth;
     
     if (!userId) {
@@ -12,7 +11,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "Не авторизован" });
     }
     
-    const currentUser = await clerkClient.users.getUser(userId);
+    // Используем новый асинхронный синтаксис для clerkClient
+    const clerk = await clerkClient();
+    const currentUser = await clerk.users.getUser(userId);
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
     
     console.log("Current user email:", currentUser.primaryEmailAddress?.emailAddress);
@@ -29,7 +30,7 @@ export default async function handler(req, res) {
     // GET запрос для получения списка пользователей
     if (req.method === "GET") {
       console.log("Getting user list");
-      const allUsers = await clerkClient.users.getUserList({
+      const allUsers = await clerk.users.getUserList({
         limit: 100, // Ограничиваем количество для производительности
       });
       
@@ -54,7 +55,7 @@ export default async function handler(req, res) {
       console.log(`Approving user ${targetId}`);
       
       // Обновляем метаданные пользователя, устанавливая флаг approved
-      await clerkClient.users.updateUser(targetId, {
+      await clerk.users.updateUser(targetId, {
         publicMetadata: { approved: true },
       });
       
