@@ -1,24 +1,35 @@
-import { authMiddleware } from "@clerk/nextjs";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from 'next/server';
 
-// Эта функция запускается перед каждым запросом к вашему приложению
-export default authMiddleware({
-  // Публичные маршруты, доступные без аутентификации
-  publicRoutes: ["/", "/api/approve", "/api/check-approval", "/admin", "/debug"],
-  
-  // Функция для настройки поведения middleware
-  afterAuth(auth, req) {
-    // Если пользователь не авторизован или маршрут публичный, пропускаем
-    if (!auth.userId || auth.isPublicRoute) {
+// Используем clerkMiddleware в нашем middleware
+export default function middleware(request) {
+  // Оборачиваем наш собственный middleware в clerkMiddleware
+  return clerkMiddleware()(request, () => {
+    const url = new URL(request.url);
+    
+    // Публичные маршруты, доступные всем
+    if (
+      url.pathname.startsWith('/_next') ||
+      url.pathname.startsWith('/favicon.ico') ||
+      url.pathname === '/' ||
+      url.pathname === '/admin' ||
+      url.pathname === '/debug'
+    ) {
       return NextResponse.next();
     }
     
-    // Если пользователь авторизован, мы позволяем запросу продолжиться
+    // Разрешаем доступ к API endpoints
+    if (url.pathname === '/api/approve' || 
+        url.pathname === '/api/check-approval') {
+      return NextResponse.next();
+    }
+    
+    // Для всех других маршрутов позволяем запросу продолжиться
     return NextResponse.next();
-  },
-});
+  });
+}
 
 // Конфигурация, какие маршруты обрабатывать
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 };
