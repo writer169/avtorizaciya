@@ -1,33 +1,24 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { authMiddleware } from "@clerk/nextjs";
 import { NextResponse } from 'next/server';
 
-// Используем clerkMiddleware в нашем middleware
-export default function middleware(request) {
-  // Оборачиваем наш собственный middleware в clerkMiddleware
-  return clerkMiddleware()(request, () => {
-    const url = new URL(request.url);
-    
-    // Публичные маршруты, доступные всем
-    if (
-      url.pathname.startsWith('/_next') ||
-      url.pathname.startsWith('/favicon.ico') ||
-      url.pathname === '/' ||
-      url.pathname === '/admin' ||
-      url.pathname === '/debug'
-    ) {
-      return NextResponse.next();
-    }
-    
-    // Разрешаем доступ к API endpoints
-    if (url.pathname === '/api/approve' || 
-        url.pathname === '/api/check-approval') {
-      return NextResponse.next();
-    }
-    
-    // Для всех других маршрутов позволяем запросу продолжиться
+// Создаем промежуточное ПО с обновленным синтаксисом
+export default authMiddleware({
+  publicRoutes: [
+    '/',
+    '/admin',
+    '/debug',
+    '/_next(.*)',
+    '/favicon.ico',
+    '/api/approve',
+    '/api/check-approval',
+  ],
+  
+  // Необязательная функция для выполнения дополнительной логики
+  afterAuth(auth, req) {
+    // Здесь можно добавить дополнительную логику, если нужно
     return NextResponse.next();
-  });
-}
+  }
+});
 
 // Конфигурация, какие маршруты обрабатывать
 export const config = {
