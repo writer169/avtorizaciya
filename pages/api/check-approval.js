@@ -1,21 +1,23 @@
-import { clerkClient, getAuth } from "@clerk/nextjs/server";
+/**
+ * Проверяет, одобрены ли пользователи для доступа к системе.
+ * Реализован с учетом обновленного API Clerk для Next.js 15.
+ */
+
+import { getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
   try {
-    // Используем асинхронный getAuth для новой версии Clerk
-    const auth = await getAuth(req);
-    console.log("Auth info:", JSON.stringify(auth));
-    
-    const { userId } = auth;
+    // Используем асинхронный getAuth для получения данных пользователя
+    const { userId } = await getAuth(req);
     
     if (!userId) {
       console.log("No userId found in auth");
       return res.status(401).json({ error: 'unauthorized' });
     }
     
-    // Используем новый асинхронный синтаксис для clerkClient
-    const clerk = await clerkClient();
-    const user = await clerk.users.getUser(userId);
+    // Используем динамический импорт для clerkClient чтобы избежать проблем
+    const { clerkClient } = await import("@clerk/nextjs/server");
+    const user = await clerkClient.users.getUser(userId);
     
     if (!user) {
       console.log(`User not found for ID: ${userId}`);
