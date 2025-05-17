@@ -5,32 +5,89 @@ export default function AdminPage() {
   const { user, isSignedIn } = useUser();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const isAdmin =
-    user?.primaryEmailAddress?.emailAddress === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const isAdmin = user?.primaryEmailAddress?.emailAddress === adminEmail;
 
   useEffect(() => {
-    if (!isAdmin) return;
+    // Только для отладки
+    if (user) {
+      console.log("Current user email:", user.primaryEmailAddress?.emailAddress);
+      console.log("Admin email from env:", adminEmail);
+      console.log("Is admin?", isAdmin);
+    }
 
-    fetch("/api/approve")
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data);
+    if (!isSignedIn) return;
+
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
+
+    async function fetchUsers() {
+      try {
+        console.log("Fetching users...");
+        const res = await fetch("/api/approve");
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error("Error fetching users:", errorData);
+          setError(`Ошибка загрузки пользователей: ${res.status} ${res.statusText}`);
+          setLoading(false);
+          return;
+        }
+        
+        const data = await res.json();
+        console.log("Fetched users:", data);
+        setUsers(data || []);
         setLoading(false);
-      });
-  }, [isAdmin]);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+        setError(`Ошибка: ${err.message}`);
+        setLoading(false);
+      }
+    }
+
+    fetchUsers();
+  }, [isSignedIn, isAdmin, user, adminEmail]);
 
   const handleApprove = async (userId) => {
-    await fetch("/api/approve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    });
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    try {
+      const res = await fetch("/api/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(`Ошибка одобрения: ${errorData.error || res.statusText}`);
+        return;
+      }
+      
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      alert("Пользователь успешно одобрен");
+    } catch (err) {
+      console.error("Failed to approve user:", err);
+      alert(`Ошибка: ${err.message}`);
+    }
   };
 
   if (!isSignedIn) return <p>Загрузка...</p>;
-  if (!isAdmin) return <p>У вас нет доступа к этой странице.</p>;
+  if (!isAdmin) return <div style={{ padding: "2rem", fontFamily: "Arial" }}>
+    <h1>Нет доступа</h1>
+    <p>У вас нет прав администратора.</p>
+    <p>Ваш email: {user?.primaryEmailAddress?.emailAddress}</p>
+    <p>Требуемый email админа: {adminEmail || "Не указан в переменных окружения"}</p>
+  </div>;
+  
+  if (error) return <div style={{ padding: "2rem", fontFamily: "Arial" }}>
+    <h1>Ошибка</h1>
+    <p>{error}</p>
+    <button onClick={() => window.location.reload()}>Попробовать снова</button>
+  </div>;
+  
   if (loading) return <p>Загрузка списка пользователей...</p>;
 
   return (
@@ -43,7 +100,7 @@ export default function AdminPage() {
         <ul>
           {users.map((u) => (
             <li key={u.id} style={{ marginBottom: "1rem" }}>
-              {u.emailAddresses[0]?.emailAddress || u.username}
+              {u.emailAddresses?.[0]?.emailAddress || u.username || "Неизвестный пользователь"}
               <button
                 onClick={() => handleApprove(u.id)}
                 style={{ marginLeft: "1rem", padding: "0.5rem" }}
