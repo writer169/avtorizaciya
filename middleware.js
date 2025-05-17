@@ -1,13 +1,23 @@
-import { authMiddleware } from "@clerk/nextjs";
- 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your middleware
-export default authMiddleware({
-  // Empty configuration will protect all routes
-  publicRoutes: ["/"]
-});
- 
+// Обратите внимание: middleware.js должен быть в корне проекта, НЕ в папке pages
+// Структура должна быть такой:
+//
+// project-root/
+// ├── middleware.js  <-- этот файл должен быть здесь
+// ├── pages/
+// │   ├── _app.js
+// │   ├── index.js
+// │   └── ...
+// ├── package.json
+// └── ...
+
+import { NextResponse } from 'next/server';
+
+// Минимальная middleware без Clerk для тестирования
+export function middleware(request) {
+  console.log("Middleware вызван!");
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: ['/((?!_next|favicon.ico).*)'],
 };
