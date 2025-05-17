@@ -1,5 +1,6 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { useRouter } from "next/router";
+import "../styles/globals.css"; // If you have global styles
 
 export default function MyApp({ Component, pageProps }) {
   const router = useRouter();
@@ -7,9 +8,8 @@ export default function MyApp({ Component, pageProps }) {
   return (
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      routerPush={router.push}
-      routerReplace={router.replace}
-      router={router}
+      afterSignInUrl="/"
+      afterSignUpUrl="/"
     >
       <Component {...pageProps} />
     </ClerkProvider>
