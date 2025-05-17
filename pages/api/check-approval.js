@@ -1,9 +1,10 @@
-import { getAuth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs";
 
 export default async function handler(req, res) {
   try {
-    // Используем getAuth с запросом
-    const { userId } = getAuth(req);
+    // Используем auth()
+    const { userId } = auth();
     
     if (!userId) {
       console.log("No userId found in auth");
