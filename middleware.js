@@ -1,33 +1,21 @@
-import { withClerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { authMiddleware } from "@clerk/nextjs";
 
-// Функция для проверки, является ли путь публичным
-function isPublic(path) {
-  return (
-    path.startsWith('/_next') ||
-    path.startsWith('/favicon.ico') ||
-    path === '/' ||
-    path === '/admin' ||
-    path === '/debug' ||
-    path === '/api/approve' ||
-    path === '/api/check-approval'
-  );
-}
-
-// Используем withClerkMiddleware для оборачивания нашей middleware функции
-export default withClerkMiddleware((req) => {
-  const { pathname } = req.nextUrl;
-  
-  // Проверяем, является ли путь публичным
-  if (isPublic(pathname)) {
-    return NextResponse.next();
-  }
-  
-  // В противном случае проверка авторизации будет выполнена withClerkMiddleware
-  return NextResponse.next();
+// Эта middleware будет применяться ко всем маршрутам, кроме перечисленных в publicRoutes
+export default authMiddleware({
+  // Маршруты, которые будут доступны без авторизации
+  publicRoutes: [
+    '/', // Ваша главная страница
+    '/admin', // Если '/admin' действительно должен быть публичным
+    '/debug', // Если '/debug' должен быть публичным
+    '/api/approve', // API маршрут для одобрения
+    '/api/check-approval', // API маршрут для проверки одобрения
+    // Добавьте другие публичные маршруты здесь
+  ],
+  // Маршруты, которые Clerk middleware будет игнорировать
+  // ignoredRoutes: ['/((?!api|trpc|_next).*)'], // Пример: игнорировать все, кроме api, trpc и _next
 });
 
-// Конфигурация, какие маршруты обрабатывать
+// Конфигурация matcher остается прежней, если она соответствует вашим требованиям
 export const config = {
-  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };
