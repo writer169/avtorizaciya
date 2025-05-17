@@ -1,23 +1,15 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { withClerkMiddleware, getAuth } from '@clerk/nextjs/server';
 
-// Создаем матчер маршрутов
-const isProtectedRoute = createRouteMatcher(['/(.*)', '/api/(.*)']);
-const isApproveApiRoute = createRouteMatcher(['/api/approve']);
-
-export default clerkMiddleware(async (req, evt) => {
-  const { userId } = req.auth;
+export default withClerkMiddleware(async (req) => {
+  const { userId } = getAuth(req);
   
-  // Пропускаем проверку для публичных маршрутов или если пользователь не аутентифицирован
-  if (!userId || !isProtectedRoute(req)) {
-    return;
-  }
-  
-  // Позволяем доступ к API одобрения для админов
-  if (isApproveApiRoute(req)) {
-    return;
+  // Если пользователь не аутентифицирован, пропускаем проверку
+  if (!userId) {
+    return NextResponse.next();
   }
 
-  // Проверяем статус одобрения пользователя
+  // Проверяем статус одобрения
   try {
     const res = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
       headers: {
@@ -26,7 +18,7 @@ export default clerkMiddleware(async (req, evt) => {
     });
     
     if (!res.ok) {
-      return new Response("Ошибка получения данных пользователя", { status: 500 });
+      return NextResponse.next();
     }
     
     const userData = await res.json();
@@ -34,12 +26,14 @@ export default clerkMiddleware(async (req, evt) => {
     if (userData.public_metadata?.approved !== true) {
       return new Response("Ожидается одобрение администратора", { status: 403 });
     }
+    
+    return NextResponse.next();
   } catch (error) {
     console.error("Ошибка в middleware:", error);
-    return new Response("Произошла ошибка", { status: 500 });
+    return NextResponse.next();
   }
 });
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/approve).*)'],
 };
