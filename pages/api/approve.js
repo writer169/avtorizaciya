@@ -1,22 +1,10 @@
-import { getAuth, clerkClient } from "@clerk/nextjs/server";
+import { getAuth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server"; // Импортируем clerkClient для явной инициализации
 
 export default async function handler(req, res) {
   try {
     console.log("CLERK_SECRET_KEY:", process.env.CLERK_SECRET_KEY ? "Set" : "Not set");
     console.log("clerkClient:", clerkClient);
-    console.log("clerkClient.users:", clerkClient?.users);
-
-    if (!clerkClient || !clerkClient.users) {
-      console.error("clerkClient or clerkClient.users is undefined");
-      return res.status(500).json({
-        error: "Clerk initialization failed",
-        details: {
-          clerkClient: !!clerkClient,
-          clerkClientUsers: !!clerkClient?.users,
-          secretKeySet: !!process.env.CLERK_SECRET_KEY,
-        },
-      });
-    }
 
     const { userId } = getAuth(req);
     
@@ -25,6 +13,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "Не авторизован" });
     }
     
+    // Используем clerkClient для получения данных пользователя
     const currentUser = await clerkClient.users.getUser(userId);
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
     
