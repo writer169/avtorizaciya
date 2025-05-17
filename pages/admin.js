@@ -18,7 +18,10 @@ export default function AdminPage() {
       console.log("Is admin?", isAdmin);
     }
 
-    if (!isSignedIn) return;
+    if (!isSignedIn) {
+      setLoading(false);
+      return;
+    }
 
     if (!isAdmin) {
       setLoading(false);
@@ -31,9 +34,9 @@ export default function AdminPage() {
         const res = await fetch("/api/approve");
         
         if (!res.ok) {
-          const errorData = await res.json();
-          console.error("Error fetching users:", errorData);
-          setError(`Ошибка загрузки пользователей: ${res.status} ${res.statusText}`);
+          console.error(`Error fetching users: ${res.status} ${res.statusText}`);
+          const errorData = await res.json().catch(() => ({}));
+          setError(`Ошибка загрузки пользователей: ${res.status} ${errorData.error || ''}`);
           setLoading(false);
           return;
         }
@@ -61,7 +64,7 @@ export default function AdminPage() {
       });
       
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         alert(`Ошибка одобрения: ${errorData.error || res.statusText}`);
         return;
       }
@@ -74,7 +77,7 @@ export default function AdminPage() {
     }
   };
 
-  if (!isSignedIn) return <p>Загрузка...</p>;
+  if (!isSignedIn) return <p>Загрузка... Пожалуйста, авторизуйтесь.</p>;
   if (!isAdmin) return <div style={{ padding: "2rem", fontFamily: "Arial" }}>
     <h1>Нет доступа</h1>
     <p>У вас нет прав администратора.</p>
