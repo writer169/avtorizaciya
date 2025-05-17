@@ -1,51 +1,26 @@
-/**
- * Проверяет, одобрены ли пользователи для доступа к системе.
- * Реализован с учетом обновленного API Clerk для Next.js 15.
- */
-
 import { getAuth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
   try {
-    // Используем асинхронный getAuth для получения данных пользователя
-    const { userId } = await getAuth(req);
+    console.log("CLERK_SECRET_KEY:", process.env.CLERK_SECRET_KEY ? "Set" : "Not set");
+    console.log("clerkClient:", clerkClient);
+
+    const { userId } = getAuth(req);
     
     if (!userId) {
-      console.log("No userId found in auth");
-      return res.status(401).json({ error: 'unauthorized' });
+      console.log("No userId in auth");
+      return res.status(401).json({ error: "Не авторизован" });
     }
     
-    // Используем динамический импорт для clerkClient чтобы избежать проблем
-    const { clerkClient } = await import("@clerk/nextjs/server");
     const user = await clerkClient.users.getUser(userId);
+    const isApproved = user.publicMetadata?.approved === true;
     
-    if (!user) {
-      console.log(`User not found for ID: ${userId}`);
-      return res.status(404).json({ error: 'user_not_found' });
-    }
+    console.log(`User ${userId} approval status: ${isApproved}`);
     
-    console.log(`User metadata for ${userId}:`, JSON.stringify(user.publicMetadata));
-    
-    // Проверяем, является ли пользователь администратором
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    const isAdmin = user.primaryEmailAddress?.emailAddress === adminEmail;
-    
-    // Админы всегда одобрены
-    if (isAdmin) {
-      console.log(`User ${userId} is admin and automatically approved`);
-      return res.status(200).json({ approved: true });
-    }
-    
-    // Проверяем флаг одобрения для обычных пользователей
-    if (user.publicMetadata?.approved !== true) {
-      console.log(`User ${userId} is not approved`);
-      return res.status(403).json({ error: 'not_approved' });
-    }
-    
-    console.log(`User ${userId} is approved`);
-    return res.status(200).json({ approved: true });
+    return res.status(200).json({ approved: isApproved });
   } catch (error) {
-    console.error('Check approval error:', error);
-    return res.status(500).json({ error: 'server_error', message: error.message });
+    console.error("Check approval error:", error);
+    res.status(500).json({ error: "server_error", message: error.message });
   }
 }
