@@ -1,10 +1,9 @@
-import { clerkClient } from "@clerk/nextjs/server";
-import { getAuth } from "@clerk/nextjs/server";
+import { clerkClient, getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(req, res) {
   try {
-    // Используем getAuth для этой версии Clerk
-    const auth = getAuth(req);
+    // Используем асинхронный getAuth для новой версии Clerk
+    const auth = await getAuth(req);
     console.log("Auth info:", JSON.stringify(auth));
     
     const { userId } = auth;
@@ -14,7 +13,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'unauthorized' });
     }
     
-    const user = await clerkClient.users.getUser(userId);
+    // Используем новый асинхронный синтаксис для clerkClient
+    const clerk = await clerkClient();
+    const user = await clerk.users.getUser(userId);
     
     if (!user) {
       console.log(`User not found for ID: ${userId}`);
